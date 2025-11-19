@@ -7,7 +7,8 @@ import {
   CheckSquare, 
   FileText, 
   User, 
-  LogOut 
+  LogOut, 
+  BookA
 } from 'lucide-react';
 
 // Import the external CSS file
@@ -41,6 +42,8 @@ const StudentSidebarContent = () => {
     { name: 'Marks', path: '/student/marks', icon: FileText },
     { name: 'Materials', path: '/student/materials', icon: BookOpen },
     { name: 'Profile', path: '/student/profile', icon: User },
+    { name: 'Attendance', path: '/student/Attendance', icon: BookA },
+
   ];
 
   return (

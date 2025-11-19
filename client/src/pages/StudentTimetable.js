@@ -93,59 +93,61 @@ const TimetableContent = () => {
                     ))}
                 </div>
 
-                {/* Schedule List */}
-                {loading ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>Loading schedule...</div>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        {dailySchedule.length > 0 ? dailySchedule.map((period, index) => (
-                            <div key={index} style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                backgroundColor: 'white', 
-                                padding: '20px', 
-                                borderRadius: '12px', 
-                                boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
-                                borderLeft: period.type === 'Break' ? '5px solid #f59e0b' : (period.type === 'Lab' ? '5px solid #9333ea' : '5px solid #3b82f6')
-                            }}>
-                                {/* Time Column */}
-                                <div style={{ width: '180px', display: 'flex', alignItems: 'center', gap: '10px', color: '#64748b', fontWeight: '500' }}>
-                                    <Clock size={18} />
-                                    {period.time_slot}
-                                </div>
-
-                                {/* Subject Info */}
-                                <div style={{ flex: 1 }}>
-                                    <h3 style={{ margin: 0, color: '#1e293b', fontSize: '1.1rem', display:'flex', alignItems:'center', gap:'10px' }}>
-                                        {period.subject}
-                                        {period.type === 'Break' && <Coffee size={18} color="#f59e0b"/>}
-                                        {period.type === 'Lab' && <FlaskConical size={18} color="#9333ea"/>}
-                                    </h3>
-                                    {period.teacher_name && (
-                                        <p style={{ margin: '5px 0 0', color: '#64748b', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                            <User size={14} /> {period.teacher_name}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Tag */}
-                                <div>
-                                    <span style={{ 
-                                        backgroundColor: period.type === 'Break' ? '#fef3c7' : (period.type === 'Lab' ? '#f3e8ff' : '#dbeafe'),
-                                        color: period.type === 'Break' ? '#d97706' : (period.type === 'Lab' ? '#7e22ce' : '#1e40af'),
-                                        padding: '6px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold'
-                                    }}>
-                                        {period.type}
-                                    </span>
-                                </div>
-                            </div>
-                        )) : (
-                            <div style={{ textAlign: 'center', padding: '50px', color: '#94a3b8', backgroundColor: 'white', borderRadius: '12px' }}>
-                                <p>No classes scheduled for {activeDay}. Enjoy your day off! 🎉</p>
-                            </div>
-                        )}
-                    </div>
-                )}
+                {/* Schedule Table */}
+                <div style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', padding: '20px', overflowX: 'auto' }}>
+                    {loading ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>Loading schedule...</div>
+                    ) : dailySchedule.length > 0 ? (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '2px solid #f1f5f9', textAlign: 'left' }}>
+                                    <th style={{ padding: '15px', color: '#64748b', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px' }}>TIME</th>
+                                    <th style={{ padding: '15px', color: '#64748b', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px' }}>TYPE</th>
+                                    <th style={{ padding: '15px', color: '#64748b', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px' }}>SUBJECT</th>
+                                    <th style={{ padding: '15px', color: '#64748b', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px' }}>INSTRUCTOR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {dailySchedule.map((period, index) => (
+                                    <tr key={index} style={{ borderBottom: '1px solid #f8fafc', transition: 'background-color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                        <td style={{ padding: '15px', color: '#475569', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <Clock size={16} color="#94a3b8"/> {period.time_slot}
+                                        </td>
+                                        <td style={{ padding: '15px' }}>
+                                            <span style={{ 
+                                                backgroundColor: period.type === 'Break' ? '#fef3c7' : (period.type === 'Lab' ? '#f3e8ff' : '#dbeafe'),
+                                                color: period.type === 'Break' ? '#d97706' : (period.type === 'Lab' ? '#7e22ce' : '#1e40af'),
+                                                padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold',
+                                                display: 'inline-block', minWidth: '70px', textAlign: 'center'
+                                            }}>
+                                                {period.type}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '15px', fontWeight: '600', color: '#1e293b', fontSize: '1rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                {period.type === 'Break' ? <Coffee size={18} color="#f59e0b"/> : (period.type === 'Lab' ? <FlaskConical size={18} color="#9333ea"/> : <BookOpen size={18} color="#3b82f6"/>)}
+                                                {period.subject}
+                                            </div>
+                                        </td>
+                                        <td style={{ padding: '15px', color: '#64748b' }}>
+                                            {period.teacher_name ? (
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <User size={16} color="#94a3b8"/> {period.teacher_name}
+                                                </span>
+                                            ) : (
+                                                <span style={{ color: '#cbd5e1' }}>-</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '50px', color: '#94a3b8' }}>
+                            <p>No classes scheduled for {activeDay}. Enjoy your day off! 🎉</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

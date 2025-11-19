@@ -8,6 +8,7 @@ import StudentProfile from './pages/StudentProfile';
 import StudentMaterials from './pages/StudentMaterials';
 import StudentMarks from './pages/StudentMarks';
 import StudentTimetable from './pages/StudentTimetable'; 
+import StudentAttendance from './pages/StudentAttendance';
 // import StaffDashboard from './pages/StaffDashboard'; // Uncomment when you build staff side
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
           <Route path="/student/materials" element={<StudentMaterials />} />
           <Route path="/student/marks" element={<StudentMarks />} />
           <Route path="/student/timetable" element={<StudentTimetable />} />
+          <Route path="/student/Attendance" element={<StudentAttendance />} />
           {/* Staff Dashboard (Placeholder for now) */}
           <Route path="/staff/dashboard" element={<h1>Staff Dashboard Coming Soon</h1>} />
         </Routes>

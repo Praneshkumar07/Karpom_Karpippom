@@ -319,6 +319,54 @@ app.get('/student/timetable/:userId', (req, res) => {
     });
 });
 
+// 12. Get Attendance History (REQUIRED FOR REPORT)
+app.get('/student/attendance/:userId', (req, res) => {
+    const userId = req.params.userId;
+    console.log(`📥 [ATTENDANCE] Fetching for User ID: ${userId}`);
+
+    // We fetch ALL history here. 
+    // The frontend handles the filtering by Month/Year for the report.
+    const sql = `
+        SELECT id, date, status, remarks 
+        FROM attendance 
+        WHERE student_id = ? 
+        ORDER BY date DESC
+    `;
+
+    db.query(sql, [userId], (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.json(results);
+    });
+});
+
+// -------------------------------------------------------------
+// UPDATED ROUTE: ANNOUNCEMENTS (With Links & Type)
+// -------------------------------------------------------------
+
+// 13. Get Announcements
+app.get('/student/announcements', (req, res) => {
+    console.log(`📥 [ANNOUNCEMENTS] Fetching all public notices...`);
+    
+    // Fetch announcements including type, links, and event times
+    const sql = `
+        SELECT id, title, content, type, subject, event_date_time, link, publish_date, priority 
+        FROM announcements 
+        ORDER BY priority = 'High' DESC, event_date_time ASC, publish_date DESC 
+        LIMIT 10
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("❌ Announcement Fetch Error:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.json(results);
+    });
+});
+
 app.listen(8081, () => {
     console.log("🚀 Server running on port 8081");
 });
