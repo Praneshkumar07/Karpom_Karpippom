@@ -1,0 +1,106 @@
+/* Dashboard Layout */
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f0f4f8;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background-color: #2a2a2a; /* Dark Theme */
+  color: white;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #444;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fbbc05; /* Accent Yellow */
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  flex-grow: 1;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  cursor: pointer;
+  text-decoration: none;
+  color: #ccc;
+  gap: 15px;
+  transition: 0.2s;
+}
+
+.menu-item:hover, .menu-item.active {
+  background-color: #444;
+  color: #fbbc05;
+  border-left: 4px solid #fbbc05;
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid #444;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  width: 100%;
+  padding: 10px;
+}
+
+.logout-btn:hover {
+  background-color: rgba(255, 107, 107, 0.1);
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.welcome-text h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #333;
+}
+
+.role-badge {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}

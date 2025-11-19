@@ -1,0 +1,85 @@
+/* StudentSidebar.css */
+
+.sidebar-container {
+  width: 250px;
+  height: 100vh;
+  background-color: #1e293b;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #334155;
+}
+
+.header-title {
+  margin: 0;
+  color: #facc15;
+  font-size: 1.5rem;
+}
+
+.header-subtitle {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.menu-container {
+  flex: 1;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  text-decoration: none;
+  margin-bottom: 5px;
+  transition: all 0.2s ease;
+  border-left: 4px solid transparent;
+  color: #cbd5e1;
+  background-color: transparent;
+}
+
+.menu-item:hover {
+  background-color: #334155;
+  color: white;
+}
+
+.menu-item.active {
+  color: #facc15;
+  background-color: #334155;
+  border-left: 4px solid #facc15;
+}
+
+.icon-wrapper {
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  padding: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #334155;
+  font-size: 1rem;
+  width: 100%;
+  transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #334155;
+}
+
+.logout-icon {
+  margin-right: 10px;
+}
