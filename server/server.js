@@ -79,7 +79,7 @@ app.get('/student/stats/:userId', (req, res) => {
         res.json({
             pending: result[0].pending || 0,
             completed: result[0].completed || 0,
-            attendance: '92%'
+            attendance: '80%'
         });
     });
 });
@@ -289,7 +289,7 @@ app.get('/student/marks/exams/:userId', (req, res) => {
 // 11. Get Student Timetable
 app.get('/student/timetable/:userId', (req, res) => {
     const userId = req.params.userId;
-    console.log(`📥 [TIMETABLE] Fetching for User ID: ${userId}`);
+    // console.log(`📥 [TIMETABLE] Fetching for User ID: ${userId}`);
 
     // Step 1: Find Student Batch
     const batchSql = `SELECT batch FROM student_details WHERE user_id = ?`;
@@ -322,7 +322,7 @@ app.get('/student/timetable/:userId', (req, res) => {
 // 12. Get Attendance History (REQUIRED FOR REPORT)
 app.get('/student/attendance/:userId', (req, res) => {
     const userId = req.params.userId;
-    console.log(`📥 [ATTENDANCE] Fetching for User ID: ${userId}`);
+    // console.log(`📥 [ATTENDANCE] Fetching for User ID: ${userId}`);
 
     // We fetch ALL history here. 
     // The frontend handles the filtering by Month/Year for the report.
@@ -348,7 +348,7 @@ app.get('/student/attendance/:userId', (req, res) => {
 
 // 13. Get Announcements
 app.get('/student/announcements', (req, res) => {
-    console.log(`📥 [ANNOUNCEMENTS] Fetching all public notices...`);
+    // console.log(`📥 [ANNOUNCEMENTS] Fetching all public notices...`);
     
     // Fetch announcements including type, links, and event times
     const sql = `
