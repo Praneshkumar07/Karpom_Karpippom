@@ -43,6 +43,7 @@ const StudentSidebarContent = () => {
     { name: 'Materials', path: '/student/materials', icon: BookOpen },
     { name: 'Profile', path: '/student/profile', icon: User },
     { name: 'Attendance', path: '/student/Attendance', icon: BookA },
+    {name : 'StudentMarksEntry', path : '/student/marksentry', icon : FileText},
 
   ];
 

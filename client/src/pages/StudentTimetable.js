@@ -1,27 +1,11 @@
 import React, { useEffect, useState, createContext, useContext } from 'react';
 import axios from 'axios';
-import { Clock, Calendar, User, LayoutDashboard, CheckSquare, BookOpen, FileText, Coffee, FlaskConical } from 'lucide-react';
+import { Clock, BookOpen, User, Coffee, FlaskConical } from 'lucide-react';
 import StudentSidebar from '../components/StudentSidebar';
-// --- INTERNAL MOCK AUTH & SIDEBAR ---
+
+// --- INTERNAL MOCK AUTH ---
 const AuthContext = createContext();
 const useAuth = () => useContext(AuthContext);
-
-// const StudentSidebar = () => (
-//   <div style={{ width: '250px', minHeight: '100vh', backgroundColor: '#1e293b', color: 'white', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-//       <div style={{ padding: '20px', borderBottom: '1px solid #334155' }}>
-//         <h2 style={{ margin: 0, color: '#facc15', fontSize: '1.5rem' }}>KK Platform</h2>
-//         <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Student Portal</span>
-//       </div>
-//       <div style={{ flex: 1, marginTop: '20px', paddingLeft: '10px' }}>
-//           <div style={{ display:'flex', alignItems:'center', padding:'12px 20px', color:'#cbd5e1', marginBottom:'5px' }}><LayoutDashboard size={20} style={{marginRight:'12px'}}/> Dashboard</div>
-//           <div style={{ display:'flex', alignItems:'center', padding:'12px 20px', color:'#cbd5e1', marginBottom:'5px' }}><CheckSquare size={20} style={{marginRight:'12px'}}/> Assignments</div>
-//           <div style={{ display:'flex', alignItems:'center', padding:'12px 20px', color:'#facc15', marginBottom:'5px', fontWeight:'bold' }}><Calendar size={20} style={{marginRight:'12px'}}/> Timetable</div>
-//           <div style={{ display:'flex', alignItems:'center', padding:'12px 20px', color:'#cbd5e1', marginBottom:'5px' }}><FileText size={20} style={{marginRight:'12px'}}/> Marks</div>
-//           <div style={{ display:'flex', alignItems:'center', padding:'12px 20px', color:'#cbd5e1', marginBottom:'5px' }}><BookOpen size={20} style={{marginRight:'12px'}}/> Materials</div>
-//           <div style={{ display:'flex', alignItems:'center', padding:'12px 20px', color:'#cbd5e1', marginBottom:'5px' }}><User size={20} style={{marginRight:'12px'}}/> Profile</div>
-//       </div>
-//   </div>
-// );
 
 // --- MAIN COMPONENT ---
 const TimetableContent = () => {
@@ -30,7 +14,8 @@ const TimetableContent = () => {
     const [activeDay, setActiveDay] = useState('Monday');
     const [loading, setLoading] = useState(true);
 
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    // ✅ UPDATED: Added 'Sunday' to the list
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     useEffect(() => {
         const userId = currentUser?.id || 4;
@@ -39,9 +24,12 @@ const TimetableContent = () => {
         axios.get(`http://localhost:8081/student/timetable/${userId}`)
             .then(res => {
                 setSchedule(res.data);
-                // Automatically select today if it's in the list
+                
+                // Automatically select today
                 const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-                if (days.includes(todayName)) setActiveDay(todayName);
+                if (days.includes(todayName)) {
+                    setActiveDay(todayName);
+                }
                 setLoading(false);
             })
             .catch(err => {
@@ -49,8 +37,7 @@ const TimetableContent = () => {
                 // Mock Fallback
                 setSchedule([
                     { day_of_week: 'Monday', time_slot: '09:00 - 10:00', subject: 'Maths', teacher_name: 'Mr. X', type: 'Class' },
-                    { day_of_week: 'Monday', time_slot: '10:00 - 10:20', subject: 'Break', type: 'Break' },
-                    { day_of_week: 'Monday', time_slot: '10:20 - 11:20', subject: 'Physics', teacher_name: 'Mrs. Y', type: 'Class' },
+                    { day_of_week: 'Sunday', time_slot: '06:00 PM - 07:30 PM', subject: 'Career Guidance', teacher_name: 'Mr. Lingaraj', type: 'Alumni Talk' },
                 ]);
                 setLoading(false);
             });
@@ -115,8 +102,8 @@ const TimetableContent = () => {
                                         </td>
                                         <td style={{ padding: '15px' }}>
                                             <span style={{ 
-                                                backgroundColor: period.type === 'Break' ? '#fef3c7' : (period.type === 'Lab' ? '#f3e8ff' : '#dbeafe'),
-                                                color: period.type === 'Break' ? '#d97706' : (period.type === 'Lab' ? '#7e22ce' : '#1e40af'),
+                                                backgroundColor: period.type === 'Break' ? '#fef3c7' : (period.type === 'Lab' ? '#f3e8ff' : (period.type === 'Alumni Talk' ? '#dcfce7' : '#dbeafe')),
+                                                color: period.type === 'Break' ? '#d97706' : (period.type === 'Lab' ? '#7e22ce' : (period.type === 'Alumni Talk' ? '#15803d' : '#1e40af')),
                                                 padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold',
                                                 display: 'inline-block', minWidth: '70px', textAlign: 'center'
                                             }}>

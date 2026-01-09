@@ -6,23 +6,6 @@ import StudentSidebar from '../components/StudentSidebar';
 const AuthContext = createContext();
 const useAuth = () => useContext(AuthContext);
 
-// const StudentSidebar = () => (
-//   <div style={{ width: '250px', minHeight: '100vh', backgroundColor: '#1e293b', color: 'white', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-//       <div style={{ padding: '20px', borderBottom: '1px solid #334155' }}>
-//         <h2 style={{ margin: 0, color: '#facc15', fontSize: '1.5rem' }}>KK Platform</h2>
-//         <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Student Portal</span>
-//       </div>
-//       <div style={{ flex: 1, marginTop: '20px', paddingLeft: '10px' }}>
-//           <div style={{ display:'flex', alignItems:'center', padding:'12px 20px', color:'#cbd5e1', marginBottom:'5px' }}><LayoutDashboard size={20} style={{marginRight:'12px'}}/> Dashboard</div>
-//           <div style={{ display:'flex', alignItems:'center', padding:'12px 20px', color:'#cbd5e1', marginBottom:'5px' }}><CheckSquare size={20} style={{marginRight:'12px'}}/> Assignments</div>
-//           <div style={{ display:'flex', alignItems:'center', padding:'12px 20px', color:'#cbd5e1', marginBottom:'5px' }}><Calendar size={20} style={{marginRight:'12px'}}/> Timetable</div>
-//           <div style={{ display:'flex', alignItems:'center', padding:'12px 20px', color:'#facc15', marginBottom:'5px', fontWeight:'bold' }}><FileText size={20} style={{marginRight:'12px'}}/> Marks</div>
-//           <div style={{ display:'flex', alignItems:'center', padding:'12px 20px', color:'#cbd5e1', marginBottom:'5px' }}><BookOpen size={20} style={{marginRight:'12px'}}/> Materials</div>
-//           <div style={{ display:'flex', alignItems:'center', padding:'12px 20px', color:'#cbd5e1', marginBottom:'5px' }}><User size={20} style={{marginRight:'12px'}}/> Profile</div>
-//       </div>
-//   </div>
-// );
-
 // --- MAIN CONTENT ---
 const MarksContent = () => {
     const { currentUser } = useAuth();
@@ -221,7 +204,6 @@ const Badge = ({ grade }) => {
         </span>
     );
 };
-
 // --- ROOT COMPONENT ---
 const StudentMarks = () => {
   return (

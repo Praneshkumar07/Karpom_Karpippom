@@ -3,11 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext'; // Import the Auth Context
 import { User, Lock } from 'lucide-react';
 
-// Import Images
+
 import logo from '../assets/KK.png';
 import image1 from '../assets/Maatram.png';
 
-// Import Styles
 import './Login.css';
 
 const Login = () => {
@@ -25,41 +24,56 @@ const Login = () => {
     const location = useLocation();   // Get current location
 
     // 3. Handle Login Logic
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setError('');
+    // Inside Login.jsx
 
-        // VALIDATION: Check if empty
-        if (!username.trim() || !password.trim()) {
-            setError("Please enter both Username and Password.");
-            return;
+const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!username.trim() || !password.trim()) {
+        setError("Please enter both Username and Password.");
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+        // 1. Perform Login
+        const loggedInUser = await login(userType, username, password);
+
+        // ============================================================
+        // ✅ CRITICAL FIX: Save the ID to Local Storage here!
+        // ============================================================
+        if (loggedInUser && loggedInUser.id) {
+            localStorage.setItem('userId', loggedInUser.id);
+        } else {
+            console.warn("Warning: Login successful, but no User ID found in response.");
+        }
+        // ============================================================
+
+        // 2. Navigation Logic
+        const role = loggedInUser.role; 
+
+        if (role === 'Student') {
+            navigate('/student/dashboard', { replace: true });
+        } else if (role === 'Tutor') {
+            navigate('/tutor/dashboard', { replace: true });
+        } else if (role === 'Lead') {
+            navigate('/lead/dashboard', { replace: true });
+        } else if (role === 'Admin') {
+            navigate('/admin/dashboard', { replace: true });
+        } else {
+            setError("Unknown role detected. Contact Admin.");
         }
 
-        setLoading(true);
-
-        try {
-            // Call the backend login function from AuthContext
-            const loggedInUser = await login(userType, username, password);
-
-            // Determine where to redirect
-            const from = location.state?.from?.pathname;
-            
-            // Redirect based on Role (Student vs Staff)
-            if (loggedInUser.role === 'Student') {
-                navigate(from || '/student/dashboard', { replace: true });
-            } else {
-                navigate(from || '/staff/dashboard', { replace: true });
-            }
-
-        } catch (err) {
-            // Handle Errors
-            const message = err.response?.data?.Error || err.message || 'Failed to log in';
-            setError(message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    } catch (err) {
+        console.error("Login Error:", err);
+        const message = err.response?.data?.Error || err.message || 'Failed to log in';
+        setError(message);
+    } finally {
+        setLoading(false);
+    }
+};
     return (
         <div className="login-page-container">
             <div className="header-logo">

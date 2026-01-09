@@ -1,6 +1,6 @@
 import React, { useEffect, useState, createContext, useContext } from 'react';
 import axios from 'axios';
-import { CalendarCheck, UserCheck, UserX, AlertTriangle, LayoutDashboard, CheckSquare, Calendar, FileText, BookOpen, User, Filter } from 'lucide-react';
+import { CalendarCheck, UserCheck, UserX, AlertTriangle, LayoutDashboard, CheckSquare, Calendar, FileText, BookOpen, User, Filter, TrendingUp } from 'lucide-react';
 import StudentSidebar from '../components/StudentSidebar';
 // --- INTERNAL MOCK AUTH & SIDEBAR ---
 const AuthContext = createContext();
@@ -32,11 +32,12 @@ const AttendanceContent = () => {
     const [loading, setLoading] = useState(true);
 
     // Filters
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()); // 0 = Jan, 11 = Dec
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()); // 0 = Jan
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-    // Stats for the selected period
+    // Stats
     const [summary, setSummary] = useState({ total: 0, present: 0, absent: 0, late: 0, percentage: 0 });
+    const [overallPercentage, setOverallPercentage] = useState(0); // State for All-time Percentage
 
     const months = [
         "January", "February", "March", "April", "May", "June", 
@@ -51,7 +52,16 @@ const AttendanceContent = () => {
 
         axios.get(`http://localhost:8081/student/attendance/${userId}`)
             .then(res => {
-                setAllAttendanceData(res.data);
+                const data = res.data;
+                setAllAttendanceData(data);
+                
+                // --- CALCULATE OVERALL ATTENDANCE (All Time) ---
+                const total = data.length;
+                // Counting 'Present' and 'Late' as attended
+                const presentCount = data.filter(d => d.status === 'Present' || d.status === 'Late').length;
+                const overall = total > 0 ? Math.round((presentCount / total) * 100) : 0;
+                setOverallPercentage(overall);
+
                 setLoading(false);
             })
             .catch(err => {
@@ -61,16 +71,17 @@ const AttendanceContent = () => {
                     { date: '2025-11-18', status: 'Present' },
                     { date: '2025-11-17', status: 'Absent', remarks: 'Sick' },
                     { date: '2025-11-16', status: 'Present' },
-                    { date: '2025-11-15', status: 'Late', remarks: 'Bus Delay' },
+                    { date: '2025-11-15', status: 'Late', remarks: 'Hello' },
                     { date: '2025-11-14', status: 'Present' },
-                    { date: '2025-10-20', status: 'Present' }, // Different month for testing
+                    { date: '2025-10-20', status: 'Present' },
                 ];
                 setAllAttendanceData(mock);
+                setOverallPercentage(83); // Mock Overall
                 setLoading(false);
             });
     }, [currentUser]);
 
-    // Filter Logic: Runs whenever Month/Year/Data changes
+    // Filter Logic
     useEffect(() => {
         const filtered = allAttendanceData.filter(record => {
             const d = new Date(record.date);
@@ -79,12 +90,13 @@ const AttendanceContent = () => {
 
         setFilteredData(filtered);
 
-        // Calculate Stats for the filtered view
+        // Calculate Stats for the SELECTED month
         const total = filtered.length;
         const present = filtered.filter(d => d.status === 'Present').length;
         const absent = filtered.filter(d => d.status === 'Absent' || d.status === 'On Leave').length;
         const late = filtered.filter(d => d.status === 'Late').length;
-        // Treat late as present for percentage calculation
+        
+        // Monthly percentage
         const percentage = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
 
         setSummary({ total, present, absent, late, percentage });
@@ -129,26 +141,38 @@ const AttendanceContent = () => {
                     </div>
                 </div>
 
-                {/* Summary Cards (Dynamic based on Filter) */}
+                {/* Summary Cards */}
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
+                    
+                    {/* Overall Attendance Card */}
                     <Card 
-                        title={`Attendance (${months[selectedMonth]})`} 
+                        title="Overall Attendance" 
+                        value={`${overallPercentage}%`} 
+                        icon={<TrendingUp size={24} color="white"/>} 
+                        bg="#6366f1" // Indigo
+                        subValue="All Time"
+                    />
+
+                    <Card 
+                        title={`Attendance (${months[selectedMonth].substring(0,3)})`} 
                         value={`${summary.percentage}%`} 
                         icon={<CalendarCheck size={24} color="white"/>} 
-                        bg="#3b82f6"
+                        bg="#3b82f6" // Blue
                     />
+                    
                     <Card 
                         title="Days Present" 
                         value={summary.present} 
                         icon={<UserCheck size={24} color="white"/>} 
-                        bg="#10b981" 
+                        bg="#10b981" // Green
                         subValue={`+ ${summary.late} Late`}
                     />
+                    
                     <Card 
                         title="Days Absent" 
                         value={summary.absent} 
                         icon={<UserX size={24} color="white"/>} 
-                        bg="#ef4444" 
+                        bg="#ef4444" // Red
                     />
                 </div>
 
@@ -221,7 +245,7 @@ const AttendanceContent = () => {
     );
 };
 
-// --- HELPER FUNCTIONS & COMPONENTS ---
+// --- HELPER FUNCTIONS ---
 
 const selectStyle = {
     padding: '8px 12px',
@@ -246,7 +270,6 @@ const Card = ({ title, value, icon, bg, subValue }) => (
     </div>
 );
 
-// Text Color
 const getStatusColor = (status) => {
     switch(status) {
         case 'Present': return '#15803d';
@@ -257,7 +280,6 @@ const getStatusColor = (status) => {
     }
 };
 
-// Background Badge Color
 const getStatusBgColor = (status) => {
     switch(status) {
         case 'Present': return '#dcfce7';

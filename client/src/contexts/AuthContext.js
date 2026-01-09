@@ -12,7 +12,6 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (userType, username, password) => {
         try {
-            // This calls the Node.js server we just created
             const res = await axios.post('http://localhost:8081/login', {
                 userType, 
                 username, 
@@ -21,7 +20,12 @@ export const AuthProvider = ({ children }) => {
 
             if (res.data.Status === "Success") {
                 setCurrentUser(res.data);
-                return { userType: userType, role: res.data.role };
+                
+                // ✅ FIXED: Return ALL data (including id and role)
+                return { 
+                    ...res.data, 
+                    userType: userType 
+                };
             } else {
                 throw new Error(res.data.Error);
             }
