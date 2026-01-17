@@ -746,4 +746,207 @@ router.post('/attendance/manual-bulk', (req, res) => {
         .catch(err => res.status(500).json(err));
 });
 
+// ==========================================
+// 1. GET: List of Tutors (for the Dropdown)
+// ==========================================
+router.get('/tutors-list', (req, res) => {
+    // Selects all users who are Tutors so they appear in the "Swap With" dropdown
+    const sql = "SELECT id, full_name FROM users WHERE role = 'Tutor'";
+    db.query(sql, (err, result) => {
+        if (err) return res.status(500).json(err);
+        res.json(result);
+    });
+});
+
+// ==========================================
+// 2. POST: Create a New Request
+// ==========================================
+router.post('/create', (req, res) => {
+    const { requestor_id, request_type, target_id, batch, subject, class_date, class_time, reason } = req.body;
+
+    // LOGIC: 
+    // If it is a SWAP, the status starts as 'PENDING_TUTOR' (Target tutor must accept first).
+    // If it is CANCEL or RELIEF, it goes straight to 'PENDING_LEAD' (Only Admin needs to approve).
+    const initialStatus = (request_type === 'SWAP') ? 'PENDING_TUTOR' : 'PENDING_LEAD';
+
+    const sql = `
+        INSERT INTO requests 
+        (requestor_id, request_type, target_id, batch, subject, class_date, class_time, reason, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [requestor_id, request_type, target_id, batch, subject, class_date, class_time, reason, initialStatus];
+
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.json({ message: "Request created successfully", id: result.insertId });
+    });
+});
+
+// ==========================================
+// 3. GET: Fetch Requests for a Specific Tutor
+// ==========================================
+router.get('/requests/:id', (req, res) => {
+    const userId = req.params.id;
+
+    // We fetch requests where the user is either the REQUESTOR or the TARGET
+    // We join with the 'users' table twice to get the names of both parties
+    const sql = `
+        SELECT 
+            r.*, 
+            u1.full_name as requestor_name, 
+            u2.full_name as target_name,
+            DATE_FORMAT(r.class_date, '%Y-%m-%d') as class_date -- Formatting date for React
+        FROM requests r
+        LEFT JOIN users u1 ON r.requestor_id = u1.id
+        LEFT JOIN users u2 ON r.target_id = u2.id
+        WHERE r.requestor_id = ? OR r.target_id = ?
+        ORDER BY r.id DESC
+    `;
+
+    db.query(sql, [userId, userId], (err, result) => {
+        if (err) return res.status(500).json(err);
+        res.json(result);
+    });
+});
+
+// ==========================================
+// 4. PUT: Tutor Responds to a Swap Request
+// ==========================================
+router.put('/respond/:id', (req, res) => {
+    const { action } = req.body; // Action will be 'ACCEPT' or 'REJECT'
+    const requestId = req.params.id;
+
+    let newStatus = '';
+    
+    if (action === 'REJECT') {
+        newStatus = 'REJECTED';
+    } else if (action === 'ACCEPT') {
+        // If Tutor B accepts the swap, it doesn't become "APPROVED" yet.
+        // It goes to "PENDING_LEAD" so the Admin can view and finalize the timetable change.
+        newStatus = 'PENDING_LEAD';
+    }
+
+    const sql = "UPDATE requests SET status = ? WHERE id = ?";
+    
+    db.query(sql, [newStatus, requestId], (err, result) => {
+        if (err) return res.status(500).json(err);
+        res.json({ message: `Request ${newStatus}` });
+    });
+});
+// GET: Auto-fetch Subject & Tutor based on Date & Batch
+router.get('/class-info', (req, res) => {
+    const { date, batch } = req.query;
+
+    if (!date || !batch) {
+        return res.status(400).json({ error: "Date and Batch are required" });
+    }
+
+    // 1. Convert YYYY-MM-DD string to a Day Name (e.g., "Tuesday")
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const d = new Date(date);
+    const dayName = days[d.getDay()];
+
+    console.log(`Checking Timetable for: ${dayName}, Batch: ${batch}`);
+
+    // 2. Query the timetables table
+    const sql = "SELECT subject, teacher_name FROM timetables WHERE batch = ? AND day_of_week = ?";
+    
+    db.query(sql, [batch, dayName], (err, result) => {
+        if (err) return res.status(500).json(err);
+        
+        if (result.length > 0) {
+            // Found a class! Return the subject and teacher
+            res.json({ 
+                found: true, 
+                subject: result[0].subject, 
+                teacher: result[0].teacher_name 
+            });
+        } else {
+            // No class scheduled for this batch on this day
+            res.json({ found: false, message: "No class found for this day." });
+        }
+    });
+});
+// Add this to your server.js if not already present
+router.get('/announcements', (req, res) => {
+    // Fetches recent announcements, prioritizing High priority
+    const sql = `
+        SELECT id, title, content, type, subject, event_date_time, priority 
+        FROM announcements 
+        ORDER BY priority = 'High' DESC, event_date_time ASC, publish_date DESC 
+        LIMIT 5
+    `;
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error fetching announcements:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.json(results);
+    });
+});
+router.get('/performance', (req, res) => {
+    const tutorId = req.query.tutor_id;
+
+    const sql = `
+        SELECT 
+            sam.subject,
+            sam.exam_type,
+            ROUND(AVG(sam.marks_obtained), 1) as avg_marks
+        FROM 
+            student_academic_marks sam
+        JOIN 
+            tutor_details td ON sam.subject = td.subjects_handled
+        WHERE 
+            td.user_id = ?
+        GROUP BY 
+            sam.subject, sam.exam_type
+        ORDER BY 
+            sam.subject, 
+            FIELD(sam.exam_type, 'Quarterly', 'Half Yearly', 'Public')
+    `;
+
+    db.query(sql, [tutorId], (err, results) => {
+        if (err) {
+            console.error("Error fetching performance:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        // Send the JSON directly to the frontend
+        res.json(results);
+    });
+});
+
+// GET Detailed Student Marks (Individual)
+router.get('/student-marks', (req, res) => {
+    const tutorId = req.query.tutor_id;
+
+    const sql = `
+        SELECT 
+            sam.student_id,
+            sam.subject,
+            sam.exam_type,
+            sam.marks_obtained
+        FROM 
+            student_academic_marks sam
+        JOIN 
+            tutor_details td ON sam.subject = td.subjects_handled
+        WHERE 
+            td.user_id = ?
+        ORDER BY 
+            sam.student_id ASC, 
+            FIELD(sam.exam_type, 'Quarterly', 'Half Yearly', 'Public')
+    `;
+
+    db.query(sql, [tutorId], (err, results) => {
+        if (err) {
+            console.error("Error fetching detailed marks:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.json(results);
+    });
+});
+
 module.exports = router;

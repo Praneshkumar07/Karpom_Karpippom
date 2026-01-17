@@ -5,7 +5,7 @@ const path = require('path');
 const db = require('./db'); // <--- IMPORT SHARED DB CONNECTION
 const tutorRoutes = require('./routes/tutorRoutes'); // <--- IMPORT TUTOR ROUTES
 const router = express.Router();
-
+const leadRoutes = require('./routes/leadRoutes'); // <--- IMPORT LEAD ROUTES
 const app = express();
 
 // Middleware
@@ -78,7 +78,7 @@ app.post('/student/assignment/submit', (req, res) => {
 // 1. Activate Tutor Routes
 // URLs will look like: http://localhost:8081/tutor/profile/1
 app.use('/tutor', tutorRoutes); 
-
+app.use('/lead', leadRoutes);
 
 // ---------------------------------------------------------
 // LOGIN API
@@ -207,6 +207,32 @@ app.post('/student/profile/update', (req, res) => {
         res.json({ Status: "Success", message: "Profile updated successfully" });
     });
 });
+// 6. Change Password Endpoint
+app.post('/student/profile/change-password', (req, res) => {
+    const { id, current_password, new_password } = req.body;
+
+    // First, verify the current password
+    const checkSql = "SELECT password FROM users WHERE id = ?";
+    db.query(checkSql, [id], (err, result) => {
+        if (err) return res.json({ error: "Database error" });
+        
+        if (result.length > 0) {
+            // NOTE: In a production app, you should use bcrypt.compare() here
+            if (result[0].password === current_password) {
+                // Password matches, proceed to update
+                const updateSql = "UPDATE users SET password = ? WHERE id = ?";
+                db.query(updateSql, [new_password, id], (err, data) => {
+                    if (err) return res.json({ error: "Error updating password" });
+                    return res.json({ Status: "Success", message: "Password Changed Successfully" });
+                });
+            } else {
+                return res.json({ Status: "Error", message: "Incorrect Current Password" });
+            }
+        } else {
+            return res.json({ Status: "Error", message: "User not found" });
+        }
+    });
+});
 
 // 6. Get Materials (Filtered by Student Batch)
 app.get('/student/materials/:userId', (req, res) => {
@@ -248,6 +274,35 @@ app.get('/student/marks/exams/:userId', (req, res) => {
     });
 });
 
+// GET Assignment Grades for a specific student
+// GET: Fetch Assignment Grades
+app.get('/student/assignment-grades/:userId', (req, res) => {
+    const userId = req.params.userId;
+
+    const sql = `
+        SELECT 
+            s.id,
+            s.assignment_id,
+            s.marks_obtained, 
+            s.remarks, 
+            s.status,
+            s.submission_date,
+            COALESCE(a.title, CONCAT('Assignment #', s.assignment_id)) as title,
+            COALESCE(a.subject, 'General') as subject
+        FROM student_submissions s
+        LEFT JOIN assignments a ON s.assignment_id = a.id
+        WHERE s.student_id = ? 
+        AND (s.status = 'Graded' OR s.marks_obtained IS NOT NULL)
+    `;
+
+    db.query(sql, [userId], (err, results) => {
+        if (err) {
+            console.error("Error fetching assignment grades:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.json(results);
+    });
+});
 // 9. Get Student Timetable
 app.get('/student/timetable/:userId', (req, res) => {
     const userId = req.params.userId;
@@ -292,13 +347,13 @@ app.get('/student/announcements', (req, res) => {
     });
 });
 // ==========================================
-//  MARKS ENTRY ROUTES (Updated for your Table)
+// 1. GET MARKS (Specific to Logged-in Student)
+// URL: http://localhost:8081/student/marks/:studentId
 // ==========================================
-
-// 1. GET Marks for a specific Student & Exam Type
+// FIX: Added '/student' prefix to match frontend
 app.get('/student/marks/:studentId', (req, res) => {
     const studentId = req.params.studentId;
-    const examType = req.query.exam_type; // e.g., 'Quarterly' or 'Half Yearly'
+    const examType = req.query.exam_type; 
 
     const sql = `
         SELECT subject, marks_obtained 
@@ -315,14 +370,15 @@ app.get('/student/marks/:studentId', (req, res) => {
     });
 });
 
-// 2. POST (Save/Update) Marks
+// ==========================================
+// 2. SAVE / UPDATE MARKS
+// URL: http://localhost:8081/student/marks/add
+// ==========================================
+// FIX: Added '/student' prefix to match frontend
 app.post('/student/marks/add', (req, res) => {
     const { student_id, academic_year, exam_type, marks_data } = req.body;
 
-    // IMPORTANT: Because you might not have a UNIQUE constraint on (student_id, exam_type, subject),
-    // we should delete old marks for this specific exam before inserting new ones to avoid duplicates.
-    // If you DO have a unique constraint, let me know and I can switch to ON DUPLICATE KEY UPDATE.
-    
+    // 1. Delete existing marks for this exam/student to avoid duplicates
     const deleteSql = "DELETE FROM student_academic_marks WHERE student_id = ? AND exam_type = ? AND academic_year = ?";
     
     db.query(deleteSql, [student_id, exam_type, academic_year], (err) => {
@@ -331,21 +387,23 @@ app.post('/student/marks/add', (req, res) => {
             return res.status(500).json({ Error: "Failed to update marks" });
         }
 
-        // Filter out empty marks
+        // 2. Filter valid marks
         const values = marks_data
             .filter(item => item.mark !== '' && item.mark !== null) 
             .map(item => [
                 student_id, 
                 item.subject, 
-                exam_type, 
+                item.exam_type || exam_type, 
                 item.mark,
                 academic_year
             ]);
 
+        // If no marks to save (all empty), just return success
         if (values.length === 0) {
             return res.json({ Status: "Success", Message: "Marks cleared." });
         }
 
+        // 3. Insert new marks
         const insertSql = `
             INSERT INTO student_academic_marks (student_id, subject, exam_type, marks_obtained, academic_year)
             VALUES ?

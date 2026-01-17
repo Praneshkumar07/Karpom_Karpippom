@@ -192,7 +192,7 @@ const SyllabusTracker = () => {
           /* --- END STATUS STYLES --- */
           
           .save-btn {
-            background-color: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 500; transition: background 0.2s;
+            background-color: #353333; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 500; transition: background 0.2s;
           }
           .save-btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
 

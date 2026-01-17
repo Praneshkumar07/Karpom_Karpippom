@@ -7,7 +7,8 @@ import {
   BookOpen, 
   FilePlus, 
   LogOut,
-  LayoutDashboard 
+  LayoutDashboard, 
+  Mail
 } from 'lucide-react';
 import './StudentSidebar.css'; 
 
@@ -28,6 +29,8 @@ const TutorSidebar = () => {
     { name: 'Syllabus Tracker', path: '/tutor/syllabus', icon: BookOpen },
     { name: 'Assignments', path: '/tutor/assignments', icon: FilePlus },
     { name: 'Upload Material', path: '/tutor/upload-material', icon: BookOpen },
+    { name: 'Tutor-Request', path: '/tutor/requests', icon: Mail},
+
   ];
 
   return (

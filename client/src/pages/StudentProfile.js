@@ -2,16 +2,24 @@ import React, { useEffect, useState } from 'react';
 import StudentSidebar from '../components/StudentSidebar';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
-import { User, Phone, MapPin, BookOpen, Briefcase } from 'lucide-react';
+import { User, Phone, MapPin, BookOpen, Briefcase, Lock, X } from 'lucide-react';
 
 const StudentProfile = () => {
   const { currentUser } = useAuth();
   const [profile, setProfile] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   
-  // Form States
+  // Profile Form States
   const [contact, setContact] = useState('');
   const [address, setAddress] = useState('');
+
+  // Password Modal States
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwords, setPasswords] = useState({
+      current: '',
+      new: '',
+      confirm: ''
+  });
 
   useEffect(() => {
     const userId = currentUser?.id || 4;
@@ -22,14 +30,13 @@ const StudentProfile = () => {
     axios.get(`http://localhost:8081/student/profile/${id}`)
       .then(res => {
           setProfile(res.data);
-          // Initialize form fields with fetched data
           setContact(res.data.contact_number);
           setAddress(res.data.address);
       })
       .catch(err => console.log(err));
   };
 
-  const handleSave = () => {
+  const handleSaveProfile = () => {
     const userId = currentUser?.id || 4;
     axios.post('http://localhost:8081/student/profile/update', {
         id: userId,
@@ -40,7 +47,7 @@ const StudentProfile = () => {
         if(res.data.Status === "Success") {
             setIsEditing(false);
             alert("Profile Updated Successfully!");
-            fetchProfile(userId); // Refresh data
+            fetchProfile(userId);
         } else {
             alert("Failed to update");
         }
@@ -48,11 +55,39 @@ const StudentProfile = () => {
     .catch(err => console.log(err));
   };
 
+  const handlePasswordChange = () => {
+      if (passwords.new !== passwords.confirm) {
+          alert("New password and confirm password do not match!");
+          return;
+      }
+      if (passwords.new.length < 5) {
+          alert("Password must be at least 5 characters long");
+          return;
+      }
+
+      const userId = currentUser?.id || 4;
+      axios.post('http://localhost:8081/student/profile/change-password', {
+          id: userId,
+          current_password: passwords.current,
+          new_password: passwords.new
+      })
+      .then(res => {
+          if (res.data.Status === "Success") {
+              alert("Password Changed Successfully!");
+              setShowPasswordModal(false);
+              setPasswords({ current: '', new: '', confirm: '' }); // Reset form
+          } else {
+              alert(res.data.message);
+          }
+      })
+      .catch(err => console.log(err));
+  };
+
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f1f5f9' }}>
       <StudentSidebar />
       
-      <div style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
+      <div style={{ flex: 1, padding: '40px', overflowY: 'auto', position: 'relative' }}>
         <h1 style={{ color: '#0f172a', marginBottom: '30px' }}>My Profile</h1>
 
         <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
@@ -86,31 +121,51 @@ const StudentProfile = () => {
           <div style={{ flex: 2, minWidth: '300px', backgroundColor: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                  <h3 style={{ margin: 0, color: '#334155' }}>Personal Details</h3>
-                 <button 
-                    onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                    style={{ 
-                        backgroundColor: isEditing ? '#10b981' : '#3b82f6', 
-                        color: 'white', 
-                        border: 'none', 
-                        padding: '8px 16px', 
-                        borderRadius: '6px', 
-                        cursor: 'pointer',
-                        fontWeight: 'bold'
-                    }}
-                 >
-                    {isEditing ? 'Save Changes' : 'Edit Details'}
-                 </button>
+                 
+                 <div style={{ display: 'flex', gap: '10px' }}>
+                     {/* Change Password Button */}
+                     <button 
+                        onClick={() => setShowPasswordModal(true)}
+                        style={{ 
+                            backgroundColor: 'white', 
+                            color: '#000000', 
+                            border: '1px solid #000000', 
+                            padding: '8px 16px', 
+                            borderRadius: '6px', 
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px'
+                        }}
+                     >
+                        <Lock size={16} /> Change Password
+                     </button>
+
+                     <button 
+                        onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
+                        style={{ 
+                            backgroundColor: isEditing ? '#012418' : '#010b1b', 
+                            color: 'white', 
+                            border: 'none', 
+                            padding: '8px 16px', 
+                            borderRadius: '6px', 
+                            cursor: 'pointer',
+                            fontWeight: 'bold'
+                        }}
+                     >
+                        {isEditing ? 'Save Changes' : 'Edit Details'}
+                     </button>
+                 </div>
              </div>
 
              <div style={{ display: 'grid', gap: '20px' }}>
                  
-                 {/* Parent Name (Read Only) */}
                  <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '15px' }}>
                     <label style={{ display: 'block', color: '#64748b', fontSize: '0.9rem', marginBottom: '5px' }}>Parent / Guardian Name</label>
                     <div style={{ fontSize: '1.1rem', color: '#1e293b' }}>{profile.parent_name}</div>
                  </div>
 
-                 {/* Contact Number (Editable) */}
                  <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '15px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '0.9rem', marginBottom: '8px' }}>
                         <Phone size={16}/> Contact Number
@@ -127,7 +182,6 @@ const StudentProfile = () => {
                     )}
                  </div>
 
-                 {/* Address (Editable) */}
                  <div>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '0.9rem', marginBottom: '8px' }}>
                         <MapPin size={16}/> Address
@@ -142,11 +196,85 @@ const StudentProfile = () => {
                         <div style={{ fontSize: '1.1rem', color: '#1e293b', lineHeight: '1.5' }}>{profile.address}</div>
                     )}
                  </div>
-
              </div>
           </div>
-
         </div>
+
+        {/* Change Password Modal */}
+        {showPasswordModal && (
+            <div style={{
+                position: 'fixed',
+                top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 1000
+            }}>
+                <div style={{
+                    backgroundColor: 'white',
+                    padding: '30px',
+                    borderRadius: '12px',
+                    width: '400px',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                        <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#1e293b' }}>Change Password</h2>
+                        <button onClick={() => setShowPasswordModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                            <X size={24} color="#64748b" />
+                        </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '5px', color: '#64748b' }}>Current Password</label>
+                            <input 
+                                type="password" 
+                                value={passwords.current}
+                                onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+                                style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '5px', color: '#64748b' }}>New Password</label>
+                            <input 
+                                type="password" 
+                                value={passwords.new}
+                                onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+                                style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '5px', color: '#64748b' }}>Confirm New Password</label>
+                            <input 
+                                type="password" 
+                                value={passwords.confirm}
+                                onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+                                style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+                            />
+                        </div>
+
+                        <button 
+                            onClick={handlePasswordChange}
+                            style={{ 
+                                marginTop: '10px',
+                                backgroundColor: '#090000', 
+                                color: 'white', 
+                                border: 'none', 
+                                padding: '12px', 
+                                borderRadius: '6px', 
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                fontSize: '1rem'
+                            }}
+                        >
+                            Update Password
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
       </div>
     </div>
   );
